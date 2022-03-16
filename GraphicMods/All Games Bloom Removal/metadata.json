@@ -1,0 +1,15 @@
+{
+	"meta":
+	{
+		"title": "Bloom Removal",
+		"author": "iwubcode",
+		"description": "Remove bloom"
+	},
+	"features":
+	[
+		{
+			"group": "Bloom",
+			"action": "skip"
+		}
+	]
+}

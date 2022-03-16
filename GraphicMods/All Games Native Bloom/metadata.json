@@ -1,0 +1,20 @@
+{
+	"meta":
+	{
+		"title": "Native Bloom",
+		"author": "iwubcode",
+		"description": "Bloom at native resolution"
+	},
+	"features":
+	[
+		{
+			"group": "Bloom",
+			"action": "scale",
+			"action_data": {
+				"X": 1.0,
+				"Y": 1.0,
+				"Z": 1.0
+			}
+		}
+	]
+}

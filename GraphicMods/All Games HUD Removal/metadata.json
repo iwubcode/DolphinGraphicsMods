@@ -1,0 +1,19 @@
+{
+	"meta":
+	{
+		"title": "Remove HUD",
+		"author": "iwubcode",
+		"description": "Removes the game's HUD by moving it"
+	},
+	"features": [
+		{
+			"group": "HUD",
+			"action": "move",
+			"action_data": {
+				"X": 10000.0,
+				"Y": 10000.0,
+				"Z": 10000.0
+			}
+		}
+	]
+}
