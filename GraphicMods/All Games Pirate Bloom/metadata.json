@@ -1,0 +1,18 @@
+{
+	"meta":
+	{
+		"title": "Pirate Bloom",
+		"author": "iwubcode",
+		"description": "Ported reshade bloom shader 'Pirate Bloom'"
+	},
+	"features":
+	[
+		{
+			"group": "Bloom",
+			"action": "post_process",
+			"action_data": {
+				"profile_name": "profile.ini"
+			}
+		}
+	]
+}

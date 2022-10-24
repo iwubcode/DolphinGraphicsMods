@@ -1,0 +1,18 @@
+{
+	"meta":
+	{
+		"title": "GTAO",
+		"author": "iwubcode",
+		"description": "Intel's GTAO"
+	},
+	"features":
+	[
+		{
+			"group": "Bloom",
+			"action": "post_process",
+			"action_data": {
+				"profile_name": "profile.ini"
+			}
+		}
+	]
+}

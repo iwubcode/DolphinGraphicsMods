@@ -1,0 +1,137 @@
+{
+	"meta":
+	{
+		"author": "iwubcode, Heathen",
+		"description": "Ported from Reshade. 'Pirate' bloom"
+	},
+	"options":
+	[
+		{
+			"type": "float",
+			"name": "BLOOM_THRESHOLD",
+			"ui_name": "Bloom - Threshold",
+			"description": "Bloom will only affect pixels above this value.",
+			"min": [ 0.0 ],
+			"max": [ 1.0 ],
+			"step": [ 0.1 ],
+			"default": [ 0.5 ]
+		},
+		{
+			"type": "float",
+			"name": "BLOOM_STRENGTH",
+			"ui_name": "Bloom - Strength",
+			"min": [ 0.0 ],
+			"max": [ 2.0 ],
+			"step": [ 0.1 ],
+			"default": [ 0.5 ]
+		},
+		{
+			"type": "float",
+			"name": "BLOOM_RADIUS",
+			"ui_name": "Bloom - Radius",
+			"description": "Pixel Radius per tap.",
+			"min": [ 1.0 ],
+			"max": [ 10.0 ],
+			"step": [ 1.0 ],
+			"default": [ 5.0 ]
+		},
+		{
+			"type": "float",
+			"name": "BLOOM_SATURATION",
+			"ui_name": "Bloom - Saturation",
+			"description": "Controls the saturation of the bloom. 1.0 = no change.",
+			"min": [ 0.0 ],
+			"max": [ 2.0 ],
+			"step": [ 1.0 ],
+			"default": [ 1.0 ]
+		},
+		{
+			"type": "enum",
+			"name": "BLOOM_BLEND",
+			"ui_name": "Bloom - Blending mode",
+			"ui_choices": [ "Add", "Add - no clip", "Screen", "Soft Light", "Color Dodge" ],
+			"values": [ 0.0, 1.0, 2.0, 3.0, 4.0 ],
+			"default_index": 0.0
+		},
+		{
+			"type": "bool",
+			"name": "BLOOM_DEBUG",
+			"ui_name": "Bloom - Debug",
+			"description": "Shows only the bloom effect.",
+			"default": false
+		},
+		{
+			"type": "int",
+			"name": "BLOOM_LINEAR_TAPS",
+			"ui_name": "Bloom - Linear Taps",
+			"description": "Number of taps per pass. The total number of taps is this times 4.",
+			"min": [ 10.0 ],
+			"max": [ 14.0 ],
+			"default": [ 12.0 ],
+			"is_constant": true
+		}
+	],
+	"passes":
+	[
+		{
+			"entry_point": "GaussBlurFirstPass",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		},
+		{
+			"entry_point": "GaussBlurV",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		},
+		{
+			"entry_point": "GaussBlurH",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		},
+		{
+			"entry_point": "GaussBlurV",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		},
+		{
+			"entry_point": "Combine",
+			"inputs":
+			[
+				{
+					"type": "previous_shader",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				},
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		}
+	]
+}

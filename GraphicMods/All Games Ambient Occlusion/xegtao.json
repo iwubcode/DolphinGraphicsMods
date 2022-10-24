@@ -1,0 +1,246 @@
+{
+	"meta":
+	{
+		"author": "iwubcode",
+		"description": "A port of intel's XeGTAO"
+	},
+	"type": "compute",
+	"options":
+	[
+		{
+			"type": "enum",
+			"name": "XE_GTAO_QUALITY",
+			"ui_name": "Quality",
+			"ui_choices": [ "Low", "Medium", "High", "Ultra" ],
+			"values": [ 0.0, 1.0, 2.0, 3.0 ],
+			"default_index": 0.0
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_EFFECT_RADIUS",
+			"ui_name": "Effect Radius",
+			"default": [ 0.5 ],
+			"precision": [ 1.0 ],
+			"min": [ 0.0 ],
+			"max": [ 1000.0 ],
+			"step": [ 0.1 ],
+			"ui_description": "World (viewspace) effect radius"
+		},
+		{
+			"type": "enum",
+			"name": "XE_GTAO_DENOISE_PASSES",
+			"ui_name": "Denoise Passes",
+			"ui_choices": [ "Disabled", "Sharp", "Medium", "Soft" ],
+			"values": [ 0.0, 1.0, 2.0, 3.0 ],
+			"default_index": 1.0,
+			"ui_description": "The amount of edge-aware spatial denoise applied"
+		},
+		{
+			"type": "bool",
+			"name": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_name": "Use defaults",
+			"default": true,
+			"is_constant": true,
+			"group_name": "Advanced"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_RADIUS_MULTIPLIER",
+			"ui_name": "Radius Multiplier",
+			"default": [ 1.457 ],
+			"precision": [ 3.0 ],
+			"min": [ 0.3 ],
+			"max": [ 3.0 ],
+			"step": [ 0.001 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Multiplies the 'Effect Radius' - used by the auto-tune to best match raytraced ground truth"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_FALLOFF_RANGE",
+			"ui_name": "Falloff Range",
+			"default": [ 0.615 ],
+			"precision": [ 3.0 ],
+			"min": [ 0.0 ],
+			"max": [ 1.0 ],
+			"step": [ 0.001 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Gently reduce sample impact as it gets out of 'Effect radius' bounds"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_SAMPLE_DISTRIBUTION_POWER",
+			"ui_name": "Sample Distribution Power",
+			"default": [ 2.0 ],
+			"min": [ 1.0 ],
+			"max": [ 3.0 ],
+			"step": [ 0.05 ],
+			"precision": [ 2.0 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Make samples on a slice equally distributed (1.0) or focus more towards the center (>1.0)"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_THIN_OCCLUDER_COMPENSATION",
+			"ui_name": "Thin Occluder Compensation",
+			"default": [ 0.0 ],
+			"min": [ 0.0 ],
+			"max": [ 0.7 ],
+			"step": [ 0.05 ],
+			"precision": [ 2.0 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Slightly reduce impact of samples further back to counter the bias from depth-based (incomplete) input scene geometry data"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_FINAL_VALUE_POWER",
+			"ui_name": "Final Value Power",
+			"default": [ 2.2 ],
+			"min": [ 0.5 ],
+			"max": [ 5.0 ],
+			"step": [ 0.05 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Applies power function to the final value: occlusion = pow( occlusion, finalPower )"
+		},
+		{
+			"type": "float",
+			"name": "XE_GTAO_DEPTH_MIP_SAMPLING_OFFSET",
+			"ui_name": "Depth Mip Sampling Offset",
+			"default": [ 3.30 ],
+			"min": [ 2.0 ],
+			"max": [ 6.0 ],
+			"step": [ 0.05 ],
+			"group_name": "Advanced",
+			"dependent_option": "XE_GTAO_USE_DEFAULT_CONSTANTS",
+			"ui_description": "Mainly performance (texture memory bandwidth) setting but as a side-effect reduces overshadowing by thin objects and increases temporal instability"
+		},
+		{
+			"type": "bool",
+			"name": "XE_GTAO_COMPUTE_BENT_NORMALS",
+			"ui_name": "Compute bent normals",
+			"default": false,
+			"is_constant": true,
+			"group_name": "Advanced"
+		},
+		{
+			"type": "bool",
+			"name": "XE_GTAO_SHOW_NORMALS",
+			"ui_name": "Show Normals",
+			"default": false,
+			"is_constant": true,
+			"group_name": "Debug"
+		},
+		{
+			"type": "bool",
+			"name": "XE_GTAO_SHOW_EDGES",
+			"ui_name": "Show Edges",
+			"default": false,
+			"is_constant": true,
+			"group_name": "Debug"
+		},
+		{
+			"type": "bool",
+			"name": "XE_GTAO_SHOW_AO_ONLY",
+			"ui_name": "Show AO Only",
+			"default": false,
+			"is_constant": true,
+			"group_name": "Debug"
+		}
+	],
+	"passes":
+	[
+		{
+			"entry_point": "DepthToNormalPass",
+			"inputs":
+			[
+				{
+					"type": "depth_buffer",
+					"texture_filter": "point",
+					"texture_mode": "clamp"
+				}
+			]
+		},
+		{
+			"entry_point": "MainPass",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				},
+				{
+					"type": "depth_buffer",
+					"texture_filter": "point",
+					"texture_mode": "clamp"
+				}
+			],
+			"outputs":
+			[
+				{
+					"name": "WORKINGEDGES"
+				},
+				{
+					"name": "DEBUG_IMG"
+				}
+			]
+		},
+		{
+			"entry_point": "DenoisePassFinal",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				},
+				{
+					"type": "named_output",
+					"name": "WORKINGEDGES",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+				,
+				{
+					"type": "named_output",
+					"name": "DEBUG_IMG",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			],
+			"outputs":
+			[
+				{
+					"name": "FINAL_DEBUG_IMG"
+				}
+			]
+		},
+		{
+			"entry_point": "CombinePass",
+			"inputs":
+			[
+				{
+					"type": "previous_pass",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				},
+				{
+					"type": "color_buffer",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				},
+				{
+					"type": "named_output",
+					"name": "FINAL_DEBUG_IMG",
+					"texture_filter": "linear",
+					"texture_mode": "clamp"
+				}
+			]
+		}
+	]
+}
