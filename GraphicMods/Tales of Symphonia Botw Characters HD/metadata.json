@@ -1,0 +1,542 @@
+{
+    "features": [
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x1024_70298ebd741ea880_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x1024_70298ebd741ea880_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x1024_70298ebd741ea880_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x1024_70298ebd741ea880_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x1024_ff0914e497311a92_14_height.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x1024_ff0914e497311a92_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x1024_ff0914e497311a92_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_4b942796e026a72a_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_4b942796e026a72a_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_4b942796e026a72a_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_4b942796e026a72a_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_6b80b49d7e1a199d_14_height.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_6b80b49d7e1a199d_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_6b80b49d7e1a199d_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_7d45c2f4fb0340c1_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_7d45c2f4fb0340c1_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_7d45c2f4fb0340c1_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_7d45c2f4fb0340c1_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_a4422cfca03a745a_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_a4422cfca03a745a_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_a4422cfca03a745a_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_a4422cfca03a745a_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_b9ed5a478e9cdf2e_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_b9ed5a478e9cdf2e_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_b9ed5a478e9cdf2e_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_b9ed5a478e9cdf2e_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_c83984897e6f0ced_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_c83984897e6f0ced_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_c83984897e6f0ced_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_c83984897e6f0ced_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "characters/tex1_256x256_eb3d51a0e1467d63_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "characters/tex1_256x256_eb3d51a0e1467d63_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "characters/tex1_256x256_eb3d51a0e1467d63_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_eb3d51a0e1467d63_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_128x128_2b3fd7e9d6c6f959_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_128x128_2b3fd7e9d6c6f959_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_128x128_2b3fd7e9d6c6f959_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_128x128_2b3fd7e9d6c6f959_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_128x128_3e41011ab0dc874c_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_128x128_3e41011ab0dc874c_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_128x128_3e41011ab0dc874c_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_128x128_3e41011ab0dc874c_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_128x128_952a39f444e9a8fe_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_128x128_952a39f444e9a8fe_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_128x128_952a39f444e9a8fe_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_128x128_952a39f444e9a8fe_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_256x256_127329f3f42f8a1a_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_256x256_127329f3f42f8a1a_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_256x256_127329f3f42f8a1a_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_256x256_127329f3f42f8a1a_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_64x128_a2383942d4f27a00_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_64x128_a2383942d4f27a00_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_64x128_a2383942d4f27a00_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_64x128_a2383942d4f27a00_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_64x128_a4834bbf2de485bf_14_height.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_64x128_a4834bbf2de485bf_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_64x128_a4834bbf2de485bf_14"
+        },
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "HEIGHT_TEX",
+                        "texture_path": "weapons/tex1_64x128_ef456b0342f9fcdd_14_height.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "weapons/tex1_64x128_ef456b0342f9fcdd_14_metallic.png"
+                    },
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "weapons/tex1_64x128_ef456b0342f9fcdd_14_normal.png"
+                    }
+                ]
+            },
+            "group": "ShaderTarget_tex1_64x128_ef456b0342f9fcdd_14"
+        }
+    ],
+    "groups": [
+        {
+            "name": "ShaderTarget_tex1_256x1024_70298ebd741ea880_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x1024_70298ebd741ea880_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x1024_70298ebd741ea880_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x1024_ff0914e497311a92_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x1024_ff0914e497311a92_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x1024_ff0914e497311a92_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_4b942796e026a72a_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_4b942796e026a72a_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_4b942796e026a72a_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_6b80b49d7e1a199d_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_6b80b49d7e1a199d_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_6b80b49d7e1a199d_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_7d45c2f4fb0340c1_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_7d45c2f4fb0340c1_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_7d45c2f4fb0340c1_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_a4422cfca03a745a_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_a4422cfca03a745a_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_a4422cfca03a745a_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_b9ed5a478e9cdf2e_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_b9ed5a478e9cdf2e_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_b9ed5a478e9cdf2e_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_c83984897e6f0ced_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_c83984897e6f0ced_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_c83984897e6f0ced_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_eb3d51a0e1467d63_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_eb3d51a0e1467d63_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_eb3d51a0e1467d63_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_128x128_2b3fd7e9d6c6f959_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_128x128_2b3fd7e9d6c6f959_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_128x128_2b3fd7e9d6c6f959_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_128x128_3e41011ab0dc874c_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_128x128_3e41011ab0dc874c_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_128x128_3e41011ab0dc874c_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_128x128_952a39f444e9a8fe_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_128x128_952a39f444e9a8fe_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_128x128_952a39f444e9a8fe_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_256x256_127329f3f42f8a1a_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_256x256_127329f3f42f8a1a_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_256x256_127329f3f42f8a1a_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_64x128_a2383942d4f27a00_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_64x128_a2383942d4f27a00_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_64x128_a2383942d4f27a00_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_64x128_a4834bbf2de485bf_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_64x128_a4834bbf2de485bf_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_64x128_a4834bbf2de485bf_14",
+                    "type": "load_texture"
+                }
+            ]
+        },
+        {
+            "name": "ShaderTarget_tex1_64x128_ef456b0342f9fcdd_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_64x128_ef456b0342f9fcdd_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_64x128_ef456b0342f9fcdd_14",
+                    "type": "load_texture"
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "author": "Autogenerated",
+        "title": "Tales of Symphonia Botw Characters HD"
+    }
+}

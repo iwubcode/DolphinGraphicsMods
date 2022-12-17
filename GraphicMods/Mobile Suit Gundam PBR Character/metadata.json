@@ -1,0 +1,50 @@
+{
+	"meta":
+	{
+		"title": "Shader PBR Character",
+		"author": "iwubcode"
+	},
+    "features": [
+        {
+            "action": "custom_pixel",
+            "action_data": {
+                "color_shader_path": "color.glsl",
+                "inputs": [
+                    {
+                        "code_name": "NORMAL_TEX",
+                        "texture_path": "tex1_512x512_m_afdbe7bdf332229e_14_normal.png"
+                    },
+                    {
+                        "code_name": "METALLIC_TEX",
+                        "texture_path": "tex1_512x512_m_afdbe7bdf332229e_14_metallic.png"
+                    },
+                    {
+                        "code_name": "ROUGHNESS_TEX",
+                        "texture_path": "tex1_512x512_m_afdbe7bdf332229e_14_smoothness.png"
+                    }
+                ]
+            },
+            "group": "NormalShaderTarget_tex1_512x512_m_afdbe7bdf332229e_14"
+        }
+    ],
+    "groups": [
+        {
+            "name": "NormalShaderTarget_tex1_512x512_m_afdbe7bdf332229e_14",
+            "targets": [
+                {
+                    "texture_filename": "tex1_512x512_m_afdbe7bdf332229e_14",
+                    "type": "draw_started"
+                },
+                {
+                    "texture_filename": "tex1_512x512_m_afdbe7bdf332229e_14",
+                    "type": "load_texture"
+                },
+                {
+                    "texture_filename": "tex1_512x512_m_afdbe7bdf332229e_14",
+                    "type": "unload_texture"
+                }
+            ]
+        }
+    ]
+}
+
