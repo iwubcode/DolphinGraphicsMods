@@ -2,6 +2,13 @@
 #define COOK 1
 #define COOK_GGX 1
 
+#define HEIGHT_MAP_IS_BACKWARDS 1
+#define ROUGHNESS_IS_BACKWARDS 1
+
+#define PI 3.1415926
+
+const float emissive_intensity = 2.5;
+
 mat3 cotangent_frame( float3 N, float3 p, float2 uv )
 {
 	float3 dp1 = dFdx( p );
@@ -22,12 +29,107 @@ float3 perturb_normal( float3 N, float3 P, float2 texcoord, float3 map)
 	return normalize( TBN * map );
 }
 
-#define PI 3.1415926
+vec2 ParallaxMappingTest(sampler2DArray depthMap, vec3 texCoords, vec3 viewDir, float heightScale)
+{ 
+	// number of depth layers
+	const float minLayers = 8;
+	const float maxLayers = 32;
+	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+	numLayers = 32;
+	// calculate the size of each layer
+	float layerDepth = 1.0 / numLayers;
+	// depth of current layer
+	float currentLayerDepth = 0.0;
+	// the amount to shift the texture coordinates per layer (from vector P)
+	vec2 P = viewDir.xy * heightScale; 
+	vec2 deltaTexCoords = P / numLayers;
 
+	// get initial values
+	vec2  currentTexCoords     = texCoords.xy;
+#ifdef HEIGHT_MAP_IS_BACKWARDS
+	float currentDepthMapValue = 1.0 - texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#else
+	float currentDepthMapValue = texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#endif
 
-// constant light position, only one light source for testing (treated as point light)
-const vec4 light_pos = vec4(-2, 3, -2, 1);
+	int loop_counter = 0;
+	for( int i = 0; i < maxLayers; i++ ) {
+		if ( i >= numLayers )
+			break;
+		if( currentLayerDepth >= currentDepthMapValue )
+			break;
+		// shift texture coordinates along direction of P
+		currentTexCoords -= deltaTexCoords;
+		// get depthmap value at current texture coordinates
+#ifdef HEIGHT_MAP_IS_BACKWARDS
+		currentDepthMapValue = 1.0 - texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#else
+		currentDepthMapValue = texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#endif
+		// get depth of next layer
+		currentLayerDepth += layerDepth;  
+		loop_counter++;
+	}
 
+	// get texture coordinates before collision (reverse operations)
+	vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+	// get depth after and before collision for linear interpolation
+	float afterDepth  = currentDepthMapValue - currentLayerDepth;
+#ifdef HEIGHT_MAP_IS_BACKWARDS
+	float beforeDepth = 1.0 - texture(depthMap, vec3(prevTexCoords, texCoords.z)).r - currentLayerDepth + layerDepth;
+#else
+	float beforeDepth = texture(depthMap, vec3(prevTexCoords, texCoords.z)).r - currentLayerDepth + layerDepth;
+#endif
+
+	// interpolation of texture coordinates
+	float weight = afterDepth / (afterDepth - beforeDepth);
+	vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+	return finalTexCoords.xy;
+}
+
+float ShadowCalc(sampler2DArray depthMap, vec3 texCoords, vec3 lightDir, float heightScale)
+{
+	if ( lightDir.z >= 0.0 )
+		return 0.0;
+
+	float minLayers = 0;
+	float maxLayers = 32;
+	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), lightDir)));
+	numLayers = 32;
+
+	vec2 currentTexCoords = texCoords.xy;
+#ifdef HEIGHT_MAP_IS_BACKWARDS
+	float currentDepthMapValue = 1.0 - texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#else
+	float currentDepthMapValue = texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#endif
+	float currentLayerDepth = currentDepthMapValue;
+
+	float layerDepth = 1.0 / numLayers;
+	vec2 P = lightDir.xy * heightScale;
+	vec2 deltaTexCoords = P / numLayers;
+
+	for( int i = 0; i < maxLayers; i++ ) {
+		if ( i >= numLayers )
+			break;
+		if( currentLayerDepth <= currentDepthMapValue && currentLayerDepth > 0.0 )
+			break;
+		// shift texture coordinates along direction of P
+		currentTexCoords += deltaTexCoords;
+		// get depthmap value at current texture coordinates
+#ifdef HEIGHT_MAP_IS_BACKWARDS
+		currentDepthMapValue = 1.0 - texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#else
+		currentDepthMapValue = texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
+#endif
+		// get depth of next layer
+		currentLayerDepth -= layerDepth;  
+	}
+	
+	return currentLayerDepth > currentDepthMapValue ? 0.0 : 1.0;
+}
 
 // handy value clamping to 0 - 1 range
 float saturate(in float value)
@@ -127,7 +229,7 @@ vec3 cooktorrance_specular(in float NdL, in float NdV, in float NdH, in vec3 spe
 	return (1.0 / rim) * specular * G * D;
 }
 
-void calculate_physical_lighting(float3 base, float metallic, float roughness, float3 N, float3 L, float3 H, float3 V, float3 light_color, float attenuation, inout float3 diffuse_color, inout float3 reflected_color)
+void calculate_physical_lighting(float3 base, float metallic, float roughness, float self_shadowing, float3 N, float3 L, float3 H, float3 V, float3 light_color, float attenuation, inout float3 diffuse_color, inout float3 reflected_color)
 {
 	// mix between metal and non-metal material, for non-metal
 	// constant base specular factor of 0.04 grey is used
@@ -177,9 +279,11 @@ void calculate_physical_lighting(float3 base, float metallic, float roughness, f
 #endif
 
 	specref *= float3(NdL);
+	specref = max(float3(0, 0, 0), specref);
+	specref = min(float3(1, 1, 1), specref);
 
 	// diffuse is common for any model
-	float3 diffref = (float3(1.0) - specfresnel) * phong_diffuse() * NdL;
+	float3 diffref = (float3(1.0) - specfresnel) * phong_diffuse() * NdL * self_shadowing;
 
 	reflected_color += specref * light_color * attenuation;
 	diffuse_color += diffref * light_color * attenuation;
@@ -193,26 +297,91 @@ float4 custom_main( in CustomShaderData data )
 	}
 	else
 	{
+		float3 eye = normalize(-data.position);
+
+		float4 base_color = data.final_color;
+		uint texmap = 0;
+		if (data.tev_stage_count != 0)
+		{
+			uint texture_set = 0;
+			for (uint i = 0; i < data.tev_stage_count; i++)
+			{
+				for (uint j = 0; j < 4; j++)
+				{
+					if (data.tev_stages[i].input_color[j].input_type == CUSTOM_SHADER_TEV_STAGE_INPUT_TYPE_TEX)
+					{
+						if (texture_set == 0)
+						{
+							base_color = float4(data.tev_stages[i].input_color[j].value, 1.0);
+							texmap = data.tev_stages[i].texmap;
+						}
+						texture_set++;
+					}
+				}
+			}
+		}
+
+#ifdef HEIGHT_TEX_UNIT
+		mat3 TBN = cotangent_frame( data.normal, -eye, HEIGHT_TEX_COORD.xy);
+		float3 eye_tangent = normalize(TBN * eye);
+		float2 new_uv = ParallaxMappingTest(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, eye_tangent, 0.05);
+		if (new_uv.x > 1.0)
+			new_uv.x = 1.0;
+		if (new_uv.y > 1.0)
+			new_uv.y = 1.0;
+		if (new_uv.x < 0.0)
+			new_uv.x = 0.0;
+		if (new_uv.y < 0.0)
+			new_uv.y = 0.0;
+		for (uint i = 0; i < 8; i++)
+		{
+			if (i == texmap)
+			{
+				base_color = texture(samp[i], float3(new_uv, 0));
+			}
+		}
+#endif
+
 #ifdef NORMAL_TEX_UNIT
+#ifdef HEIGHT_TEX_UNIT
+		float4 map_rgb = texture(samp[NORMAL_TEX_UNIT], float3(new_uv, NORMAL_TEX_COORD.z));
+#else
 		float4 map_rgb = texture(samp[NORMAL_TEX_UNIT], NORMAL_TEX_COORD);
+#endif
 		float4 map = map_rgb * 2.0 - 1.0;
+#ifdef HEIGHT_TEX_UNIT
+		float3 normal = perturb_normal(normalize(data.normal), data.position, new_uv, map.xyz);
+#else
 		float3 normal = perturb_normal(normalize(data.normal), data.position, NORMAL_TEX_COORD.xy, map.xyz);
+#endif
 #else
 		float3 normal = data.normal.xyz;
 #endif
 
 #ifdef METALLIC_TEX_UNIT
+#ifdef HEIGHT_TEX_UNIT
+		float metallic = texture(samp[METALLIC_TEX_UNIT], float3(new_uv, METALLIC_TEX_COORD.z)).x;
+#else
 		float metallic = texture(samp[METALLIC_TEX_UNIT], METALLIC_TEX_COORD).x;
+#endif
 #else
 		float metallic = 0;
 #endif
+
 #ifdef ROUGHNESS_TEX_UNIT
-		float roughness = texture(samp[ROUGHNESS_TEX_UNIT], ROUGHNESS_TEX_COORD).x;
+#ifdef HEIGHT_TEX_UNIT
+		float roughness = texture(samp[ROUGHNESS_TEX_UNIT], float3(new_uv, ROUGHNESS_TEX_COORD.z)).x;
 #else
-		float roughness = 0;
+		float roughness = texture(samp[ROUGHNESS_TEX_UNIT], ROUGHNESS_TEX_COORD).x;
+#endif
+#else
+		float roughness = 0.5;
 #endif
 
-		float3 eye = normalize(-data.position);
+#ifdef ROUGHNESS_IS_BACKWARDS
+		roughness = 1.0 - roughness;
+#endif
+
 		float3 diffuse_color = float3(0, 0, 0);
 		float3 reflected_color = float3(0, 0, 0);
 		for (int i = 0; i < data.light_count; i++)
@@ -224,8 +393,16 @@ float4 custom_main( in CustomShaderData data )
 				float3 cosAttn = data.light[i].cosatt.xyz;
 				float3 distAttn = data.light[i].distatt.xyz;
 				attn = max(0.0, dot(cosAttn, float3(1.0, attn, attn*attn))) / dot(distAttn, float3(1.0, attn, attn * attn));
+#ifdef HEIGHT_TEX_UNIT
+				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+				float3 light_dir_tangent = normalize(TBN * light_dir);
+				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
+#else
+				float self_shadowing = 0.0;
+#endif
 				float3 H = normalize(light_dir + eye);
-				calculate_physical_lighting(data.final_color.xyz, metallic, roughness, normal, light_dir, H, eye, data.light[i].color, attn, diffuse_color, reflected_color);
+				vec3 light_color = data.light[i].color;
+				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
 			}
 			if (data.light[i].attenuation_type == 0 || data.light[i].attenuation_type == 2)
 			{
@@ -234,8 +411,16 @@ float4 custom_main( in CustomShaderData data )
 				{
 					light_dir = normal;
 				}
+#ifdef HEIGHT_TEX_UNIT
+				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+				float3 light_dir_tangent = normalize(TBN * light_dir);
+				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
+#else
+				float self_shadowing = 0.0;
+#endif
 				float3 H = normalize(light_dir + eye);
-				calculate_physical_lighting(data.final_color.xyz, metallic, roughness, normal, light_dir, H, eye, data.light[i].color, 1.0, diffuse_color, reflected_color);
+				vec3 light_color = data.light[i].color;
+				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, 1.0, diffuse_color, reflected_color);
 			}
 			if (data.light[i].attenuation_type == 3)
 			{
@@ -248,13 +433,30 @@ float4 custom_main( in CustomShaderData data )
 				float3 cosAttn = data.light[i].cosatt.xyz;
 				float3 distAttn = data.light[i].distatt.xyz;
 				attn = max(0.0, cosAttn.x + cosAttn.y*attn + cosAttn.z*attn*attn) / dot( distAttn, float3(1.0, dist, distsq) );
+#ifdef HEIGHT_TEX_UNIT
+				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+				float3 light_dir_tangent = normalize(TBN * light_dir);
+				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
+#else
+				float self_shadowing = 0.0;
+#endif
 				float3 H = normalize(light_dir + eye);
-				calculate_physical_lighting(data.final_color.xyz, metallic, roughness, normal, light_dir, H, eye, data.light[i].color, attn, diffuse_color, reflected_color);
+				vec3 light_color = data.light[i].color;
+				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
 			}
 		}
 		diffuse_color = diffuse_color / (diffuse_color + vec3(1.0));
 		diffuse_color = pow(diffuse_color, vec3(1.0/2.2)); 
-		float3 result = diffuse_color * mix(data.final_color.xyz, float3(0.0), metallic) + reflected_color;
+		float3 result = diffuse_color * mix(base_color.xyz, float3(0.0), metallic) + base_color.xyz * 0.5 + reflected_color;
+
+#ifdef EMISSIVE_TEX_UNIT
+#ifdef HEIGHT_TEX_UNIT
+		result += texture(samp[EMISSIVE_TEX_UNIT], float3(new_uv, EMISSIVE_TEX_COORD.z)).xyz * emissive_intensity;
+#else
+		result += texture(samp[EMISSIVE_TEX_UNIT], EMISSIVE_TEX_COORD).xyz * emissive_intensity;
+#endif
+#endif
+
 		return float4(result, 1);
 	}
 }
