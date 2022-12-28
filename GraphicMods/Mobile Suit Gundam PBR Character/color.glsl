@@ -5,9 +5,12 @@
 #define HEIGHT_MAP_IS_BACKWARDS 1
 #define ROUGHNESS_IS_BACKWARDS 1
 
+//#define LIGHTING_ONLY 1
+
 #define PI 3.1415926
 
 const float emissive_intensity = 2.5;
+const float parallax_scale = 0.05;
 
 mat3 cotangent_frame( float3 N, float3 p, float2 uv )
 {
@@ -19,8 +22,8 @@ mat3 cotangent_frame( float3 N, float3 p, float2 uv )
 	float3 dp1perp = cross( N, dp1 );
 	float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
 	float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
-	float invmax = 1.0 / sqrt(max(dot(T,T), dot(B,B)));
-	//float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
+	//float invmax = 1.0 / sqrt(max(dot(T,T), dot(B,B)));
+	float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
 	return mat3( normalize(T * invmax), normalize(B * invmax), N );
 }
 float3 perturb_normal( float3 N, float3 P, float2 texcoord, float3 map)
@@ -91,9 +94,6 @@ vec2 ParallaxMappingTest(sampler2DArray depthMap, vec3 texCoords, vec3 viewDir, 
 
 float ShadowCalc(sampler2DArray depthMap, vec3 texCoords, vec3 lightDir, float heightScale)
 {
-	if ( lightDir.z >= 0.0 )
-		return 0.0;
-
 	float minLayers = 0;
 	float maxLayers = 32;
 	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), lightDir)));
@@ -283,7 +283,7 @@ void calculate_physical_lighting(float3 base, float metallic, float roughness, f
 	specref = min(float3(1, 1, 1), specref);
 
 	// diffuse is common for any model
-	float3 diffref = (float3(1.0) - specfresnel) * phong_diffuse() * NdL * self_shadowing;
+	float3 diffref = (float3(1.0) - specfresnel) * phong_diffuse() * NdL * (1.0 - self_shadowing);
 
 	reflected_color += specref * light_color * attenuation;
 	diffuse_color += diffref * light_color * attenuation;
@@ -324,7 +324,7 @@ float4 custom_main( in CustomShaderData data )
 #ifdef HEIGHT_TEX_UNIT
 		mat3 TBN = cotangent_frame( data.normal, -eye, HEIGHT_TEX_COORD.xy);
 		float3 eye_tangent = normalize(TBN * eye);
-		float2 new_uv = ParallaxMappingTest(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, eye_tangent, 0.05);
+		float2 new_uv = ParallaxMappingTest(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, eye_tangent, parallax_scale);
 		if (new_uv.x > 1.0)
 			new_uv.x = 1.0;
 		if (new_uv.y > 1.0)
@@ -350,9 +350,9 @@ float4 custom_main( in CustomShaderData data )
 #endif
 		float4 map = map_rgb * 2.0 - 1.0;
 #ifdef HEIGHT_TEX_UNIT
-		float3 normal = perturb_normal(normalize(data.normal), data.position, new_uv, map.xyz);
+		float3 normal = perturb_normal(normalize(data.normal), eye, NORMAL_TEX_COORD.xy, map.xyz);
 #else
-		float3 normal = perturb_normal(normalize(data.normal), data.position, NORMAL_TEX_COORD.xy, map.xyz);
+		float3 normal = perturb_normal(normalize(data.normal), eye, NORMAL_TEX_COORD.xy, map.xyz);
 #endif
 #else
 		float3 normal = data.normal.xyz;
@@ -393,12 +393,14 @@ float4 custom_main( in CustomShaderData data )
 				float3 cosAttn = data.light[i].cosatt.xyz;
 				float3 distAttn = data.light[i].distatt.xyz;
 				attn = max(0.0, dot(cosAttn, float3(1.0, attn, attn*attn))) / dot(distAttn, float3(1.0, attn, attn * attn));
+				float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
 				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
 				float3 light_dir_tangent = normalize(TBN * light_dir);
-				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
-#else
-				float self_shadowing = 0.0;
+				if (dot(normal, light_dir) <= 0)
+				{
+					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+				}
 #endif
 				float3 H = normalize(light_dir + eye);
 				vec3 light_color = data.light[i].color;
@@ -411,12 +413,14 @@ float4 custom_main( in CustomShaderData data )
 				{
 					light_dir = normal;
 				}
+				float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
 				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
 				float3 light_dir_tangent = normalize(TBN * light_dir);
-				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
-#else
-				float self_shadowing = 0.0;
+				if (dot(normal, light_dir) <= 0)
+				{
+					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+				}
 #endif
 				float3 H = normalize(light_dir + eye);
 				vec3 light_color = data.light[i].color;
@@ -433,12 +437,14 @@ float4 custom_main( in CustomShaderData data )
 				float3 cosAttn = data.light[i].cosatt.xyz;
 				float3 distAttn = data.light[i].distatt.xyz;
 				attn = max(0.0, cosAttn.x + cosAttn.y*attn + cosAttn.z*attn*attn) / dot( distAttn, float3(1.0, dist, distsq) );
+				float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
 				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
 				float3 light_dir_tangent = normalize(TBN * light_dir);
-				float self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, 0.05);
-#else
-				float self_shadowing = 0.0;
+				if (dot(normal, light_dir) <= 0)
+				{
+					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+				}
 #endif
 				float3 H = normalize(light_dir + eye);
 				vec3 light_color = data.light[i].color;
@@ -446,8 +452,12 @@ float4 custom_main( in CustomShaderData data )
 			}
 		}
 		diffuse_color = diffuse_color / (diffuse_color + vec3(1.0));
-		diffuse_color = pow(diffuse_color, vec3(1.0/2.2)); 
+		diffuse_color = pow(diffuse_color, vec3(1.0/2.2));
+#ifdef LIGHTING_ONLY
+		float3 result = diffuse_color;
+#else
 		float3 result = diffuse_color * mix(base_color.xyz, float3(0.0), metallic) + base_color.xyz * 0.5 + reflected_color;
+#endif
 
 #ifdef EMISSIVE_TEX_UNIT
 #ifdef HEIGHT_TEX_UNIT
