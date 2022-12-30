@@ -386,7 +386,7 @@ float4 custom_main( in CustomShaderData data )
 		float3 reflected_color = float3(0, 0, 0);
 		for (int i = 0; i < data.light_count; i++)
 		{
-			if (data.light[i].attenuation_type == 1)
+			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_POINT)
 			{
 				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
 				float attn = (dot(normal, light_dir) >= 0.0) ? max(0.0, dot(normal, data.light[i].direction.xyz)) : 0.0;
@@ -406,7 +406,7 @@ float4 custom_main( in CustomShaderData data )
 				vec3 light_color = data.light[i].color;
 				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
 			}
-			if (data.light[i].attenuation_type == 0 || data.light[i].attenuation_type == 2)
+			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_NONE || data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_DIR)
 			{
 				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
 				if (length(light_dir) == 0)
@@ -426,7 +426,7 @@ float4 custom_main( in CustomShaderData data )
 				vec3 light_color = data.light[i].color;
 				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, 1.0, diffuse_color, reflected_color);
 			}
-			if (data.light[i].attenuation_type == 3)
+			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_SPOT)
 			{
 				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
 				float distsq = dot(light_dir, light_dir);
