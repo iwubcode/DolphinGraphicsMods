@@ -38,10 +38,6 @@
                 {
                     "texture_filename": "tex1_512x512_m_afdbe7bdf332229e_14",
                     "type": "load_texture"
-                },
-                {
-                    "texture_filename": "tex1_512x512_m_afdbe7bdf332229e_14",
-                    "type": "unload_texture"
                 }
             ]
         }

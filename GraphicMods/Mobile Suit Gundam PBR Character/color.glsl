@@ -2,15 +2,17 @@
 #define COOK 1
 #define COOK_GGX 1
 
-#define HEIGHT_MAP_IS_BACKWARDS 1
-#define ROUGHNESS_IS_BACKWARDS 1
+// force reload
+
+//#define HEIGHT_MAP_IS_BACKWARDS 1
+//#define ROUGHNESS_IS_BACKWARDS 1
 
 //#define LIGHTING_ONLY 1
 
 #define PI 3.1415926
 
 const float emissive_intensity = 2.5;
-const float parallax_scale = 0.05;
+const float parallax_scale = 0.005;
 
 mat3 cotangent_frame( float3 N, float3 p, float2 uv )
 {
@@ -106,11 +108,13 @@ float ShadowCalc(sampler2DArray depthMap, vec3 texCoords, vec3 lightDir, float h
 	float currentDepthMapValue = texture(depthMap, vec3(currentTexCoords, texCoords.z)).r;
 #endif
 	float currentLayerDepth = currentDepthMapValue;
+	float startingDepth = currentLayerDepth;
 
 	float layerDepth = 1.0 / numLayers;
 	vec2 P = lightDir.xy * heightScale;
 	vec2 deltaTexCoords = P / numLayers;
 
+	float shadow_amount = 0.0;
 	for( int i = 0; i < maxLayers; i++ ) {
 		if ( i >= numLayers )
 			break;
@@ -235,20 +239,6 @@ void calculate_physical_lighting(float3 base, float metallic, float roughness, f
 	// constant base specular factor of 0.04 grey is used
 	float3 specular = mix(vec3(0.04), base, metallic);
 
-	// diffuse IBL term
-	//    I know that my IBL cubemap has diffuse pre-integrated value in 10th MIP level
-	//    actually level selection should be tweakable or from separate diffuse cubemap
-	//mat3x3 tnrm = transpose(normal_matrix);
-	//float3 envdiff = textureCubeLod(envd, tnrm * N, 10).xyz;
-
-	// specular IBL term
-	//    11 magic number is total MIP levels in cubemap, this is simplest way for picking
-	//    MIP level from roughness value (but it's not correct, however it looks fine)
-	//float3 refl = tnrm * reflect(-V, N);
-	//float3 envspec = textureCubeLod(
-	//	envd, refl, max(roughness * 11.0, textureQueryLod(envd, refl).y)
-	//).xyz;
-
 	// compute material reflectance
 
 	float NdL = max(0.0, dot(N, L));
@@ -289,8 +279,42 @@ void calculate_physical_lighting(float3 base, float metallic, float roughness, f
 	diffuse_color += diffref * light_color * attenuation;
 }
 
+vec3 blendMultiply(vec3 base, vec3 blend, float opacity) {
+	return (base * blend * opacity + base * (1.0 - opacity));
+}
+
+float blendOverlay(float base, float blend) {
+	return base<0.5?(2.0*base*blend):(1.0-2.0*(1.0-base)*(1.0-blend));
+}
+
+vec3 blendOverlay(vec3 base, vec3 blend) {
+	return vec3(blendOverlay(base.r,blend.r),blendOverlay(base.g,blend.g),blendOverlay(base.b,blend.b));
+}
+
+vec3 blendOverlay(vec3 base, vec3 blend, float opacity) {
+	return (blendOverlay(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+vec3 blendHardLight(vec3 base, vec3 blend) {
+	return blendOverlay(blend,base);
+}
+
+vec3 blendHardLight(vec3 base, vec3 blend, float opacity) {
+	return (blendHardLight(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+float fresnel(float amount, vec3 normal, vec3 view)
+{
+	return pow((1.0 - clamp(dot(normalize(normal), normalize(view)), 0.0, 1.0 )), amount);
+}
+
 float4 custom_main( in CustomShaderData data )
 {
+	if (data.normal.xyz == float3(0, 0, 0))
+	{
+		return data.final_color;
+	}
+
 	if (data.texcoord_count == 0)
 	{
 		return data.final_color;
@@ -357,6 +381,10 @@ float4 custom_main( in CustomShaderData data )
 #else
 		float3 normal = data.normal.xyz;
 #endif
+		//normal.y *= -1;
+		//normal = data.normal.xyz;
+		//return float4(normal * 0.5 + 0.5, 1);
+		//return float4(data.normal.xyz * 0.5 + 0.5, 1);
 
 #ifdef METALLIC_TEX_UNIT
 #ifdef HEIGHT_TEX_UNIT
@@ -382,81 +410,104 @@ float4 custom_main( in CustomShaderData data )
 		roughness = 1.0 - roughness;
 #endif
 
+#ifdef AMBIENT_OCCLUSION_TEX_UNIT
+#ifdef HEIGHT_TEX_UNIT
+		float ao = texture(samp[AMBIENT_OCCLUSION_TEX_UNIT], float3(new_uv, AMBIENT_OCCLUSION_TEX_COORD.z)).x;
+#else
+		float ao = texture(samp[AMBIENT_OCCLUSION_TEX_UNIT], AMBIENT_OCCLUSION_TEX_COORD).x;
+#endif
+#else
+		float ao = 1.0;
+#endif
+
 		float3 diffuse_color = float3(0, 0, 0);
 		float3 reflected_color = float3(0, 0, 0);
 		for (int i = 0; i < data.light_count; i++)
 		{
-			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_POINT)
+			if (data.lights[i].light_type == CUSTOM_SHADER_LIGHTING_LIGHT_TYPE_COLOR)
 			{
-				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
-				float attn = (dot(normal, light_dir) >= 0.0) ? max(0.0, dot(normal, data.light[i].direction.xyz)) : 0.0;
-				float3 cosAttn = data.light[i].cosatt.xyz;
-				float3 distAttn = data.light[i].distatt.xyz;
-				attn = max(0.0, dot(cosAttn, float3(1.0, attn, attn*attn))) / dot(distAttn, float3(1.0, attn, attn * attn));
-				float self_shadowing = 0.0;
+				if (data.lights[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_POINT)
+				{
+					float3 light_dir = normalize(data.lights[i].position - data.position.xyz);
+					float attn = (dot(normal, light_dir) >= 0.0) ? max(0.0, dot(normal, data.lights[i].direction.xyz)) : 0.0;
+					float3 cosAttn = data.lights[i].cosatt.xyz;
+					float3 distAttn = data.lights[i].distatt.xyz;
+					attn = max(0.0, dot(cosAttn, float3(1.0, attn, attn*attn))) / dot(distAttn, float3(1.0, attn, attn * attn));
+					float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
-				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
-				float3 light_dir_tangent = normalize(TBN * light_dir);
-				if (dot(normal, light_dir) <= 0)
-				{
-					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
-				}
+					mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+					float3 light_dir_tangent = normalize(TBN * light_dir);
+					if (dot(normal, light_dir) <= 0)
+					{
+						self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+					}
 #endif
-				float3 H = normalize(light_dir + eye);
-				vec3 light_color = data.light[i].color;
-				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
-			}
-			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_NONE || data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_DIR)
-			{
-				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
-				if (length(light_dir) == 0)
-				{
-					light_dir = normal;
+					float3 H = normalize(light_dir + eye);
+					vec3 light_color = data.lights[i].color;
+					calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
 				}
-				float self_shadowing = 0.0;
+				if (data.lights[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_NONE || data.lights[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_DIR)
+				{
+					float3 light_dir = normalize(data.lights[i].position - data.position.xyz);
+					if (length(light_dir) == 0)
+					{
+						light_dir = normal;
+					}
+					float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
-				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
-				float3 light_dir_tangent = normalize(TBN * light_dir);
-				if (dot(normal, light_dir) <= 0)
-				{
-					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
-				}
+					mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+					float3 light_dir_tangent = normalize(TBN * light_dir);
+					if (dot(normal, light_dir) <= 0)
+					{
+						self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+					}
 #endif
-				float3 H = normalize(light_dir + eye);
-				vec3 light_color = data.light[i].color;
-				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, 1.0, diffuse_color, reflected_color);
-			}
-			if (data.light[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_SPOT)
-			{
-				float3 light_dir = normalize(data.light[i].position - data.position.xyz);
-				float distsq = dot(light_dir, light_dir);
-				float dist = sqrt(distsq);
-				float3 light_dir_div = light_dir / dist;
-				float attn = max(0.0, dot(light_dir_div, data.light[i].direction.xyz));
+					float3 H = normalize(light_dir + eye);
+					vec3 light_color = data.lights[i].color;
+					calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, 1.0, diffuse_color, reflected_color);
+				}
+				if (data.lights[i].attenuation_type == CUSTOM_SHADER_LIGHTING_ATTENUATION_TYPE_SPOT)
+				{
+					float3 light_dir = normalize(data.lights[i].position - data.position.xyz);
+					float distsq = dot(light_dir, light_dir);
+					float dist = sqrt(distsq);
+					float3 light_dir_div = light_dir / dist;
+					float attn = max(0.0, dot(light_dir_div, data.lights[i].direction.xyz));
 
-				float3 cosAttn = data.light[i].cosatt.xyz;
-				float3 distAttn = data.light[i].distatt.xyz;
-				attn = max(0.0, cosAttn.x + cosAttn.y*attn + cosAttn.z*attn*attn) / dot( distAttn, float3(1.0, dist, distsq) );
-				float self_shadowing = 0.0;
+					float3 cosAttn = data.lights[i].cosatt.xyz;
+					float3 distAttn = data.lights[i].distatt.xyz;
+					attn = max(0.0, cosAttn.x + cosAttn.y*attn + cosAttn.z*attn*attn) / dot( distAttn, float3(1.0, dist, distsq) );
+					float self_shadowing = 0.0;
 #ifdef HEIGHT_TEX_UNIT
-				mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
-				float3 light_dir_tangent = normalize(TBN * light_dir);
-				if (dot(normal, light_dir) <= 0)
-				{
-					self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
-				}
+					mat3 TBN = cotangent_frame( normalize(data.normal), -eye, HEIGHT_TEX_COORD.xy);
+					float3 light_dir_tangent = normalize(TBN * light_dir);
+					if (dot(normal, light_dir) <= 0)
+					{
+						self_shadowing = ShadowCalc(samp[HEIGHT_TEX_UNIT], HEIGHT_TEX_COORD, light_dir_tangent, parallax_scale);
+					}
 #endif
-				float3 H = normalize(light_dir + eye);
-				vec3 light_color = data.light[i].color;
-				calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
+					float3 H = normalize(light_dir + eye);
+					vec3 light_color = data.lights[i].color;
+					calculate_physical_lighting(base_color.xyz, metallic, roughness, self_shadowing, normal, light_dir, H, eye, light_color, attn, diffuse_color, reflected_color);
+				}
 			}
+		}
+		if (data.light_count == 0)
+		{
+			return data.final_color;
 		}
 		diffuse_color = diffuse_color / (diffuse_color + vec3(1.0));
 		diffuse_color = pow(diffuse_color, vec3(1.0/2.2));
 #ifdef LIGHTING_ONLY
-		float3 result = diffuse_color;
+		float3 result = diffuse_color * data.base_material[0].xyz;
 #else
-		float3 result = diffuse_color * mix(base_color.xyz, float3(0.0), metallic) + base_color.xyz * 0.5 + reflected_color;
+		const float rimlight_size = 0.991;
+		const float rimlight_blend = 0.01;
+		float add3  = rimlight_blend + rimlight_size;
+		float basic_fresnel = fresnel(0.1, normal, eye);
+		float rimLightIntensity = smoothstep(rimlight_size, add3, basic_fresnel);
+
+		float3 result = diffuse_color * ao * data.base_material[0].xyz * mix(base_color.xyz, float3(0.0), metallic) + float3(rimLightIntensity * 0.2) + reflected_color;
 #endif
 
 #ifdef EMISSIVE_TEX_UNIT
