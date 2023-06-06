@@ -14,6 +14,7 @@
 const float emissive_intensity = 2.5;
 const float parallax_scale = 0.005;
 
+// from http://www.thetenthplanet.de/archives/1180
 mat3 cotangent_frame( float3 N, float3 p, float2 uv )
 {
 	float3 dp1 = dFdx( p );
@@ -34,6 +35,7 @@ float3 perturb_normal( float3 N, float3 P, float2 texcoord, float3 map)
 	return normalize( TBN * map );
 }
 
+// Pulled from different details about the theory and some web tutorials
 vec2 ParallaxMappingTest(sampler2DArray depthMap, vec3 texCoords, vec3 viewDir, float heightScale)
 { 
 	// number of depth layers
@@ -94,6 +96,7 @@ vec2 ParallaxMappingTest(sampler2DArray depthMap, vec3 texCoords, vec3 viewDir, 
 	return finalTexCoords.xy;
 }
 
+// from https://stackoverflow.com/questions/55089830/adding-shadows-to-parallax-occlusion-map
 float ShadowCalc(sampler2DArray depthMap, vec3 texCoords, vec3 lightDir, float heightScale)
 {
 	float minLayers = 0;
@@ -142,6 +145,7 @@ float saturate(in float value)
 }
 
 
+// PBR functions leveraged from https://gist.github.com/galek/53557375251e1a942dfa
 // phong (lambertian) diffuse term
 float phong_diffuse()
 {
@@ -277,30 +281,6 @@ void calculate_physical_lighting(float3 base, float metallic, float roughness, f
 
 	reflected_color += specref * light_color * attenuation;
 	diffuse_color += diffref * light_color * attenuation;
-}
-
-vec3 blendMultiply(vec3 base, vec3 blend, float opacity) {
-	return (base * blend * opacity + base * (1.0 - opacity));
-}
-
-float blendOverlay(float base, float blend) {
-	return base<0.5?(2.0*base*blend):(1.0-2.0*(1.0-base)*(1.0-blend));
-}
-
-vec3 blendOverlay(vec3 base, vec3 blend) {
-	return vec3(blendOverlay(base.r,blend.r),blendOverlay(base.g,blend.g),blendOverlay(base.b,blend.b));
-}
-
-vec3 blendOverlay(vec3 base, vec3 blend, float opacity) {
-	return (blendOverlay(base, blend) * opacity + base * (1.0 - opacity));
-}
-
-vec3 blendHardLight(vec3 base, vec3 blend) {
-	return blendOverlay(blend,base);
-}
-
-vec3 blendHardLight(vec3 base, vec3 blend, float opacity) {
-	return (blendHardLight(base, blend) * opacity + base * (1.0 - opacity));
 }
 
 float fresnel(float amount, vec3 normal, vec3 view)
